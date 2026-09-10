@@ -1,16 +1,15 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Stars, useTexture } from '@react-three/drei'
+import { OrbitControls, Stars } from '@react-three/drei'
 import * as THREE from 'three'
 import type { RouteModel } from '../domain/routing'
 import { chokepointRules } from '../domain/chokepoints'
 import type { Coordinates, ImpactAssessment } from '../types'
 
 const EARTH_RADIUS = 1.42
-const EARTH_TEXTURE = 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg'
 
 function toVector(point: Coordinates, radius = EARTH_RADIUS) {
   const phi = (90 - point.lat) * Math.PI / 180
-  const theta = (point.lng + 180) * Math.PI / 180
+  const theta = point.lng * Math.PI / 180
   return new THREE.Vector3(
     -radius * Math.sin(phi) * Math.cos(theta),
     radius * Math.cos(phi),
@@ -29,8 +28,6 @@ function arcBetween(start: Coordinates, end: Coordinates, lift = .08) {
 }
 
 function Earth({ route, impact }: { route: RouteModel; impact: ImpactAssessment }) {
-  const texture = useTexture(EARTH_TEXTURE)
-  texture.colorSpace = THREE.SRGBColorSpace
   const nominalArcs = route.nominal.slice(1).map((point, index) => arcBetween(route.nominal[index], point))
   const alternateArcs = route.alternate.length > 1 ? route.alternate.slice(1).map((point, index) => arcBetween(route.alternate[index], point, .12)) : []
   const activeRules = chokepointRules.filter((rule) => impact.activeChokepoints.includes(rule.id))
@@ -41,7 +38,11 @@ function Earth({ route, impact }: { route: RouteModel; impact: ImpactAssessment 
     <Stars radius={7} depth={4} count={700} factor={2.1} saturation={0} fade speed={.25} />
     <mesh>
       <sphereGeometry args={[EARTH_RADIUS, 64, 64]} />
-      <meshStandardMaterial map={texture} roughness={.95} metalness={0} />
+      <meshStandardMaterial color="#123b46" roughness={.9} metalness={.05} />
+    </mesh>
+    <mesh scale={1.003}>
+      <sphereGeometry args={[EARTH_RADIUS, 32, 24]} />
+      <meshBasicMaterial color="#74a9a7" wireframe transparent opacity={.2} />
     </mesh>
     <mesh scale={1.035}>
       <sphereGeometry args={[EARTH_RADIUS, 48, 48]} />

@@ -24,6 +24,10 @@ La zone de route propose trois onglets :
 
 Les deux vues affichent les ports connus par leur UN/LOCODE, la route nominale, les chokepoints actifs et une route alternative en pointilles lorsqu'une fermeture impacte le service. La timeline reste la source de verite lorsque des coordonnees sont inconnues.
 
+Les géométries sont calculées côté serveur sur un graphe de routes maritimes, et non par des segments directs entre ports. Elles évitent ainsi les traversées manifestes de continents et les détours polaires produits par une simple interpolation cartographique.
+
+Ce calcul reste indicatif et ne constitue pas une route de navigation certifiée. Une validation opérationnelle doit intégrer le tirant d'eau et les caractéristiques du navire, la marge sous quille (UKC), les ENC S-101/S-57, la bathymétrie S-102 ou équivalente, les niveaux d'eau, les restrictions portuaires, la météo et les avertissements de navigation. Pour un usage production, remplacer le moteur local par un fournisseur maritime qualifié et conserver l'API derrière le proxy serveur.
+
 Le registre actuel couvre :
 
 - canaux de Suez, Panama et Kiel ;
