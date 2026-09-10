@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"npm:dev:server\" \"npm:dev:web\"",
     "dev:web": "vite",
-    "dev:server": "tsx server/index.ts",
+    "dev:server": "tsx --env-file-if-exists=.env server/index.ts",
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "test:secrets": "node scripts/check-bundle-secrets.mjs",

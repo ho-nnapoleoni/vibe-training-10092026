@@ -3,7 +3,8 @@ import cors from 'cors'
 import { createServer } from 'node:http'
 import { details, services } from '../src/data.js'
 import { calculateMaritimePaths } from './maritime-routing.js'
-import type { Coordinates } from '../src/types.js'
+import { buildFinancialImpactResult } from './financial-agent.js'
+import type { Coordinates, ImpactAssessment, ServiceDetail } from '../src/types.js'
 
 const app = express()
 const port = Number(process.env.PORT ?? 8787)
@@ -11,14 +12,19 @@ const fixtureMode = process.env.FIXTURE_MODE !== 'false'
 const upstream = process.env.CMA_API_BASE_URL ?? 'https://apis.cma-cgm.net/vesseloperation/proforma/v2'
 const timeoutMs = Number(process.env.CMA_API_TIMEOUT_MS ?? 8000)
 const apiKey = process.env.CMA_API_KEY
+const mistralApiKey = process.env.MISTRAL_API_KEY
+const mistralModel = process.env.MISTRAL_MODEL ?? 'mistral-small-latest'
+const mistralBaseUrl = process.env.MISTRAL_BASE_URL ?? 'https://api.mistral.ai/v1'
+const mistralTimeoutMs = Number(process.env.MISTRAL_TIMEOUT_MS ?? 8000)
 const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173,http://127.0.0.1:5173').split(',').map((origin) => origin.trim())
 if (!Number.isFinite(timeoutMs) || timeoutMs < 100) throw new Error('CMA_API_TIMEOUT_MS must be a number greater than 100')
+if (!Number.isFinite(mistralTimeoutMs) || mistralTimeoutMs < 100) throw new Error('MISTRAL_TIMEOUT_MS must be a number greater than 100')
 if (!fixtureMode && !apiKey) throw new Error('CMA_API_KEY is required when FIXTURE_MODE=false')
 
 const requestCounts = new Map<string, { count: number; resetAt: number }>()
 app.disable('x-powered-by')
 app.use(cors({ origin(origin, callback) { callback(null, !origin || allowedOrigins.includes(origin)) } }))
-app.use(express.json())
+app.use(express.json({ limit: '100kb' }))
 app.use((req, res, next) => {
   const requestId = crypto.randomUUID()
   const startedAt = performance.now()
@@ -36,7 +42,7 @@ app.use((req, res, next) => {
   next()
 })
 
-app.get('/api/health', (_req, res) => res.json({ status: 'ok', mode: fixtureMode ? 'fixture' : 'live', upstreamConfigured: Boolean(process.env.CMA_API_KEY), requestId: crypto.randomUUID() }))
+app.get('/api/health', (_req, res) => res.json({ status: 'ok', mode: fixtureMode ? 'fixture' : 'live', upstreamConfigured: Boolean(process.env.CMA_API_KEY), aiConfigured: Boolean(mistralApiKey), requestId: crypto.randomUUID() }))
 async function fetchUpstream(path: string, range = '0-49'): Promise<{ payload: unknown; contentRange?: string }> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
@@ -95,6 +101,30 @@ app.post('/api/routes/maritime', (req, res) => {
   if (!valid) return res.status(400).json({ error: { code: 'INVALID_ROUTE', message: 'Invalid maritime route coordinates.', retryable: false } })
   try { return res.json({ paths: calculateMaritimePaths(paths) }) }
   catch { return res.status(422).json({ error: { code: 'ROUTE_UNAVAILABLE', message: 'Maritime route could not be calculated.', retryable: false } }) }
+})
+app.post('/api/agent/rerouting-cost', async (req, res) => {
+  const detail = req.body?.detail as ServiceDetail | undefined
+  const impact = req.body?.impact as ImpactAssessment | undefined
+  const divertedVesselCount = req.body?.divertedVesselCount as number | undefined
+  const valid = detail
+    && typeof detail.code === 'string' && detail.code.length <= 40
+    && Array.isArray(detail.fleet) && detail.fleet.length <= 100
+    && (!detail.criticality || ['STANDARD', 'CRITICAL'].includes(detail.criticality))
+    && impact && ['AFFECTED', 'NOT_AFFECTED', 'UNKNOWN'].includes(impact.status)
+    && Array.isArray(impact.activeChokepoints) && impact.activeChokepoints.length <= 8
+    && typeof impact.alternateRoute === 'string' && impact.alternateRoute.length <= 200
+    && (impact.additionalDays === undefined || (Number.isFinite(impact.additionalDays) && impact.additionalDays >= 0 && impact.additionalDays <= 365))
+    && typeof divertedVesselCount === 'number' && Number.isInteger(divertedVesselCount) && divertedVesselCount >= 1 && divertedVesselCount <= Math.max(detail.fleet.length, 1)
+  if (!valid) return res.status(400).json({ error: { code: 'INVALID_FINANCIAL_CONTEXT', message: 'Invalid financial impact context.', retryable: false } })
+  const validatedVesselCount = divertedVesselCount as number
+  const result = await buildFinancialImpactResult(detail, impact, {
+    apiKey: mistralApiKey,
+    model: mistralModel,
+    baseUrl: mistralBaseUrl,
+    timeoutMs: mistralTimeoutMs,
+    divertedVesselCount: validatedVesselCount,
+  })
+  return res.json(result)
 })
 
 createServer(app).listen(port, () => console.log(`Disruption Navigator API listening on http://localhost:${port}`))

@@ -6,10 +6,13 @@ import {
   Check,
   ChevronDown,
   CircleHelp,
+  CircleDollarSign,
   Clock3,
   Gauge,
   Map,
+  Minus,
   Moon,
+  Plus,
   RefreshCw,
   RotateCcw,
   Ship,
@@ -24,9 +27,10 @@ import { details, zones } from "./data";
 import { chokepointById, chokepointRules } from "./domain/chokepoints";
 import { buildRouteModel } from "./domain/routing";
 import { MapViewer } from "./components/MapViewer";
-import { loadMaritimeRoutes, loadServiceDetail, request } from "./api";
+import { loadFinancialImpact, loadMaritimeRoutes, loadServiceDetail, request } from "./api";
 import type {
   Chokepoint,
+  FinancialImpactResult,
   ImpactAssessment,
   ServiceDetail,
   ServiceSummary,
@@ -569,6 +573,12 @@ function ServiceDetailPanel({
 }) {
   const [route, setRoute] = useState(() => buildRouteModel(detail.proformaCalls, impact));
   const [routeError, setRouteError] = useState("");
+  const [financialImpact, setFinancialImpact] = useState<FinancialImpactResult | null>(null);
+  const [financialLoading, setFinancialLoading] = useState(false);
+  const [financialError, setFinancialError] = useState("");
+  const [financialReload, setFinancialReload] = useState(0);
+  const maxDivertedVessels = Math.max(detail.fleet.length, 1);
+  const [divertedVesselCount, setDivertedVesselCount] = useState(maxDivertedVessels);
   useEffect(() => {
     const controller = new AbortController();
     setRoute(buildRouteModel(detail.proformaCalls, impact));
@@ -580,6 +590,29 @@ function ServiceDetailPanel({
       });
     return () => controller.abort();
   }, [detail.code, detail.proformaCalls, impact.status, impact.activeChokepoints.join("|")]);
+  useEffect(() => {
+    if (impact.status !== "AFFECTED") {
+      setFinancialImpact(null);
+      setFinancialError("");
+      return;
+    }
+    const controller = new AbortController();
+    setFinancialLoading(true);
+    setFinancialError("");
+    setFinancialImpact(null);
+    loadFinancialImpact(detail, impact, divertedVesselCount, controller.signal)
+      .then(setFinancialImpact)
+      .catch((error) => {
+        if (error.name !== "AbortError") setFinancialError("Financial estimate unavailable");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setFinancialLoading(false);
+      });
+    return () => controller.abort();
+  }, [detail, impact, divertedVesselCount, financialReload]);
+  useEffect(() => {
+    setDivertedVesselCount(maxDivertedVessels);
+  }, [detail.code, maxDivertedVessels]);
   const [view, setView] = useState<"map" | "globe" | "comparison">("map");
   const views: readonly ("map" | "globe" | "comparison")[] = route.alternate.length > 1 ? ["map", "globe", "comparison"] : ["map", "globe"];
   useEffect(() => {
@@ -783,7 +816,60 @@ function ServiceDetailPanel({
           </div>
         )}
       </div>
+      {impact.status === "AFFECTED" && (
+        <FinancialImpactPanel
+          result={financialImpact}
+          loading={financialLoading}
+          error={financialError}
+          retry={() => setFinancialReload((value) => value + 1)}
+          divertedVesselCount={divertedVesselCount}
+          maxDivertedVessels={maxDivertedVessels}
+          setDivertedVesselCount={setDivertedVesselCount}
+        />
+      )}
     </div>
+  );
+}
+
+const currency = new Intl.NumberFormat("en", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+
+function FinancialImpactPanel({ result, loading, error, retry, divertedVesselCount, maxDivertedVessels, setDivertedVesselCount }: { result: FinancialImpactResult | null; loading: boolean; error: string; retry: () => void; divertedVesselCount: number; maxDivertedVessels: number; setDivertedVesselCount: (value: number) => void }) {
+  return (
+    <section className="financial-card" aria-busy={loading}>
+      <div className="financial-heading">
+        <div className="financial-icon"><CircleDollarSign size={19} /></div>
+        <div><span>FINANCIAL IMPACT AGENT</span><h4>Estimated rerouting exposure</h4></div>
+        {result && <span className={`risk-badge ${result.riskLevel.toLowerCase()}`}>{result.riskLevel}</span>}
+      </div>
+      <div className="vessel-count-control">
+        <div><span>Diverted vessels</span><small>Available fleet: {maxDivertedVessels}</small></div>
+        <div className="number-stepper">
+          <button type="button" aria-label="Remove one diverted vessel" disabled={divertedVesselCount <= 1 || loading} onClick={() => setDivertedVesselCount(divertedVesselCount - 1)}><Minus size={14} /></button>
+          <output aria-live="polite">{divertedVesselCount}</output>
+          <button type="button" aria-label="Add one diverted vessel" disabled={divertedVesselCount >= maxDivertedVessels || loading} onClick={() => setDivertedVesselCount(divertedVesselCount + 1)}><Plus size={14} /></button>
+        </div>
+      </div>
+      {loading && !result && <div className="financial-loading"><RefreshCw className="spin" size={16} />Calculating financial exposure...</div>}
+      {error && <SectionError label={error} retry={retry} />}
+      {result && (
+        <>
+          <div className="financial-totals">
+            <div><span>Per diverted vessel</span><strong>{currency.format(result.costPerVessel)}</strong><small>Central unit estimate</small></div>
+            <div><span>Total · {result.divertedVesselCount} vessel{result.divertedVesselCount > 1 ? "s" : ""}</span><strong>{currency.format(result.totalCost)}</strong><small>{currency.format(result.lowEstimate)} – {currency.format(result.highEstimate)} range</small></div>
+          </div>
+          <div className="financial-breakdown">
+            <div><span>Total direct cost</span><strong>{currency.format(result.directCost)}</strong></div>
+            <div><span>Total opportunity cost</span><strong>{currency.format(result.opportunityCost)}</strong></div>
+          </div>
+          <p className="financial-explanation">{result.explanation}</p>
+          <p className="proposal"><strong>[PROPOSAL]</strong> {result.recommendation.replace("[PROPOSAL] ", "")}</p>
+          <div className="financial-meta">
+            <span>{result.source === "mistral" ? "Mistral analysis" : "Local analysis"}</span>
+            <span>{result.modelVersion}</span>
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 

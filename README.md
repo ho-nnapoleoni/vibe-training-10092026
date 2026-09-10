@@ -53,6 +53,30 @@ Le détail charge en parallèle les métadonnées, les escales proforma et la fl
 
 Le thème clair/sombre est mémorisé dans le navigateur et adopte la préférence système lors de la première visite.
 
+## Agent d'impact financier
+
+Lorsqu'un service est affecté, le panneau de détail estime le coût du reroutage avec une ventilation entre coût direct et coût d'opportunité. Le moteur TypeScript calcule les montants de manière déterministe; Mistral génère uniquement l'explication et la recommandation à partir de ces montants.
+
+Le modèle de démonstration `rerouting-cost-v2` utilise les hypothèses suivantes :
+
+- 65 000 EUR par navire et par jour d'exploitation supplémentaire ;
+- 55 000 EUR par navire et par jour de carburant supplémentaire ;
+- 45 000 EUR par jour de retard commercial pour un service critique, 20 000 EUR sinon ;
+- 150 000 EUR de frais de route par navire lorsqu'un reroutage est nécessaire ;
+- intervalle d'incertitude de -20 % à +25 % autour de l'estimation centrale.
+
+Ces valeurs sont configurées pour la démonstration et doivent être remplacées par des données finance, bunker, affrètement et contrats clients validées avant tout usage opérationnel.
+
+La clé Mistral reste exclusivement dans l'environnement du serveur. Copier `.env.example` vers `.env`, puis renseigner la nouvelle clé dans `.env` uniquement :
+
+```powershell
+Copy-Item .env.example .env
+# Modifier MISTRAL_API_KEY dans .env sans partager sa valeur.
+npm run dev
+```
+
+Le script serveur charge automatiquement ce fichier, qui est ignoré par Git. Sans clé, en cas de timeout ou de réponse Mistral invalide, le calcul et une synthèse locale restent disponibles. Le navigateur ne reçoit jamais la clé.
+
 ## Verifications
 
 ```powershell

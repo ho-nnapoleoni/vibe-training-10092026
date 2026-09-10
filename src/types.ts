@@ -65,6 +65,33 @@ export interface ImpactAssessment {
   reason: string
 }
 
+export interface FinancialAssumptions {
+  vesselDailyCost: number
+  fuelDailyCost: number
+  commercialDelayDailyCost: number
+  routeFees: number
+  currency: 'EUR'
+}
+
+export interface FinancialImpact {
+  divertedVesselCount: number
+  costPerVessel: number
+  directCost: number
+  opportunityCost: number
+  totalCost: number
+  lowEstimate: number
+  highEstimate: number
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  assumptions: FinancialAssumptions
+  modelVersion: string
+}
+
+export interface FinancialImpactResult extends FinancialImpact {
+  source: 'mistral' | 'local'
+  recommendation: string
+  explanation: string
+}
+
 export interface ServiceWithImpact extends ServiceSummary {
   impact: ImpactAssessment
 }

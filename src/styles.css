@@ -810,6 +810,147 @@ select:focus-visible {
   line-height: 1.5;
   margin: 0;
 }
+.financial-card {
+  margin: 0 19px 19px;
+  border: 1px solid rgba(168, 235, 207, 0.3);
+  background: rgba(168, 235, 207, 0.04);
+  padding: 14px;
+}
+.financial-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.financial-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: var(--mint);
+  background: rgba(168, 235, 207, 0.1);
+}
+.financial-heading span,
+.financial-totals span,
+.financial-breakdown span {
+  color: var(--muted);
+  font: 9px var(--mono);
+  text-transform: uppercase;
+}
+.financial-heading h4 {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+.risk-badge {
+  margin-left: auto;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  color: var(--yellow) !important;
+}
+.risk-badge.high,
+.risk-badge.critical {
+  color: var(--coral) !important;
+  border-color: rgba(255, 128, 108, 0.35);
+}
+.financial-loading {
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted);
+  font: 10px var(--mono);
+}
+.vessel-count-control {
+  margin-top: 14px;
+  padding: 10px 0;
+  border-block: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.vessel-count-control span,
+.vessel-count-control small {
+  display: block;
+  color: var(--muted);
+  font: 9px var(--mono);
+  text-transform: uppercase;
+}
+.vessel-count-control small {
+  margin-top: 4px;
+  text-transform: none;
+}
+.number-stepper {
+  display: grid;
+  grid-template-columns: 30px 38px 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+}
+.number-stepper button,
+.number-stepper output {
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+}
+.number-stepper button {
+  cursor: pointer;
+}
+.number-stepper button:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.number-stepper output {
+  border-inline: 1px solid var(--line);
+  color: var(--mint);
+  font: 12px var(--mono);
+}
+.financial-totals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  padding: 18px 0 13px;
+}
+.financial-totals strong {
+  display: block;
+  margin: 4px 0;
+  color: var(--mint);
+  font-size: 25px;
+}
+.financial-totals small {
+  color: var(--muted);
+  font: 9px var(--mono);
+}
+.financial-breakdown {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-block: 1px solid var(--line);
+}
+.financial-breakdown div {
+  padding: 11px 0;
+}
+.financial-breakdown div + div {
+  padding-left: 13px;
+  border-left: 1px solid var(--line);
+}
+.financial-breakdown strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+}
+.financial-explanation {
+  margin: 13px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.financial-meta {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font: 9px var(--mono);
+}
 footer {
   border-top: 1px solid var(--line);
   color: var(--muted);

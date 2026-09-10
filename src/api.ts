@@ -1,4 +1,4 @@
-import type { ApiEnvelope, ProformaCall, ServiceDetail, ServiceDetailResult, ServiceSummary, Vessel } from './types'
+import type { ApiEnvelope, FinancialImpactResult, ProformaCall, ServiceDetail, ServiceDetailResult, ServiceSummary, Vessel } from './types'
 import { buildRouteStops, type RoutePaths } from './domain/routing'
 import type { ImpactAssessment } from './types'
 
@@ -42,4 +42,10 @@ export async function loadMaritimeRoutes(calls: ProformaCall[], impact: ImpactAs
   })
   const [nominal, affected, alternate] = response.paths
   return { nominal, affected, alternate }
+}
+
+export function loadFinancialImpact(detail: ServiceDetail, impact: ImpactAssessment, divertedVesselCount: number, signal?: AbortSignal): Promise<FinancialImpactResult> {
+  return request<FinancialImpactResult>('/api/agent/rerouting-cost', signal, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ detail, impact, divertedVesselCount }),
+  })
 }
