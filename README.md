@@ -16,10 +16,11 @@ Le mode fixture permet de rejouer le parcours complet sans cle API : `ASIE` vers
 
 ## Carte et chokepoints
 
-La zone de route propose deux onglets :
+La zone de route propose trois onglets :
 
 - **2D map** : carte Leaflet actuelle avec ports, chokepoints et route alternative ;
 - **3D globe** : globe terrestre Three.js manipulable à la souris, avec rotation automatique, rotation manuelle par glisser-déposer et zoom à la molette.
+- **Before / After** : comparaison côte à côte de la route nominale et de l'alternative proposée.
 
 Les deux vues affichent les ports connus par leur UN/LOCODE, la route nominale, les chokepoints actifs et une route alternative en pointilles lorsqu'une fermeture impacte le service. La timeline reste la source de verite lorsque des coordonnees sont inconnues.
 
@@ -38,16 +39,22 @@ Ne mettez jamais la cle dans le frontend, dans Git ou dans un prompt. Configurez
 $env:FIXTURE_MODE="false"
 $env:CMA_API_BASE_URL="https://apis.cma-cgm.net/vesseloperation/proforma/v2"
 $env:CMA_API_KEY="<secret fourni par le gestionnaire de l'API>"
+$env:ALLOWED_ORIGINS="http://localhost:5173"
 npm run dev
 ```
 
-Le proxy Express ajoute le header `KeyId`, limite les appels aux GET necessaires et garde le secret hors du navigateur. Sans cle live, l'application doit rester en mode fixture.
+Le proxy Express ajoute le header `KeyId`, limite les appels aux GET necessaires et garde le secret hors du navigateur. Il valide la configuration live au démarrage, restreint CORS, limite le débit, ajoute des en-têtes de sécurité et produit des logs JSON corrélés par `requestId`. Sans clé live, l'application doit rester en mode fixture.
+
+Le détail charge en parallèle les métadonnées, les escales proforma et la flotte. Une sous-requête en échec reste isolée et peut être relancée sans masquer les autres données. Les requêtes obsolètes sont annulées lors d'un changement rapide de sélection.
+
+Le thème clair/sombre est mémorisé dans le navigateur et adopte la préférence système lors de la première visite.
 
 ## Verifications
 
 ```powershell
 npm test
 npm run build
+npm run test:secrets
 ```
 
 Le moteur de disruption est local et explicable. Les routes alternatives et les jours additionnels sont des estimations heuristiques et chaque recommandation est marquee `[PROPOSAL]`; aucune action de reroutage n'est executee.

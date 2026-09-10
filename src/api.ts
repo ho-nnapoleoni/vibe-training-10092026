@@ -1,11 +1,13 @@
 import type { ApiEnvelope, ProformaCall, ServiceDetail, ServiceDetailResult, ServiceSummary, Vessel } from './types'
+import { buildRouteStops, type RoutePaths } from './domain/routing'
+import type { ImpactAssessment } from './types'
 
 export class ApiError extends Error {
   constructor(message: string, public readonly retryable = false) { super(message) }
 }
 
-export async function request<T>(url: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(url, { signal })
+export async function request<T>(url: string, signal?: AbortSignal, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, { ...init, signal })
   const payload = await response.json().catch(() => null)
   if (!response.ok) throw new ApiError(payload?.error?.message ?? 'Service indisponible', payload?.error?.retryable ?? response.status >= 500)
   return payload as T
@@ -32,4 +34,12 @@ export async function loadServiceDetail(service: ServiceSummary, signal?: AbortS
     proformaError: callsResult.status === 'rejected' ? String(callsResult.reason?.message ?? callsResult.reason) : undefined,
     fleetError: fleetResult.status === 'rejected' ? String(fleetResult.reason?.message ?? fleetResult.reason) : undefined,
   }
+}
+
+export async function loadMaritimeRoutes(calls: ProformaCall[], impact: ImpactAssessment, signal?: AbortSignal): Promise<RoutePaths> {
+  const response = await request<{ paths: [RoutePaths['nominal'], RoutePaths['affected'], RoutePaths['alternate']] }>('/api/routes/maritime', signal, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ paths: buildRouteStops(calls, impact) }),
+  })
+  const [nominal, affected, alternate] = response.paths
+  return { nominal, affected, alternate }
 }

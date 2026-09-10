@@ -14,7 +14,7 @@ function toVector(point: Coordinates, radius = EARTH_RADIUS) {
   return new THREE.Vector3(
     -radius * Math.sin(phi) * Math.cos(theta),
     radius * Math.cos(phi),
-    radius * Math.sin(phi) * Math.cos(theta),
+    radius * Math.sin(phi) * Math.sin(theta),
   )
 }
 
@@ -49,7 +49,7 @@ function Earth({ route, impact }: { route: RouteModel; impact: ImpactAssessment 
     </mesh>
     {nominalArcs.map((arc, index) => <line key={`nominal-${index}`}><bufferGeometry attach="geometry" onUpdate={(geometry) => geometry.setFromPoints(arc)} /><lineBasicMaterial color="#a8ebcf" linewidth={2} transparent opacity={.95} /></line>)}
     {alternateArcs.map((arc, index) => <line key={`alternate-${index}`}><bufferGeometry attach="geometry" onUpdate={(geometry) => geometry.setFromPoints(arc)} /><lineDashedMaterial color="#ff806c" dashSize={.07} gapSize={.045} linewidth={2} /></line>)}
-    {route.nominal.map((point) => <mesh key={point.unLocode} position={toVector(point, EARTH_RADIUS + .025)}><sphereGeometry args={[.045, 12, 12]} /><meshBasicMaterial color="#a8ebcf" /></mesh>)}
+    {route.ports.map((point) => <mesh key={point.unLocode} position={toVector(point, EARTH_RADIUS + .025)}><sphereGeometry args={[.045, 12, 12]} /><meshBasicMaterial color="#a8ebcf" /></mesh>)}
     {activeRules.map((rule) => <mesh key={rule.id} position={toVector(rule.marker, EARTH_RADIUS + .035)}><sphereGeometry args={[.065, 14, 14]} /><meshBasicMaterial color="#ff806c" /></mesh>)}
   </>
 }
