@@ -9,7 +9,14 @@ function FitRoute({ route }: { route: RouteModel }) {
   const map = useMap()
   useEffect(() => {
     const points = [...route.nominal, ...route.alternate].map((point) => [point.lat, point.lng] as [number, number])
-    if (points.length > 1) map.fitBounds(points, { padding: [28, 28] })
+    const fit = () => {
+      map.invalidateSize()
+      if (points.length > 1) map.fitBounds(points, { padding: [28, 28] })
+    }
+    fit()
+    const observer = new ResizeObserver(fit)
+    observer.observe(map.getContainer())
+    return () => observer.disconnect()
   }, [map, route])
   return null
 }
@@ -25,11 +32,11 @@ export function MapViewer({ route, impact, mode = 'combined' }: { route: RouteMo
     <MapContainer className="route-map" center={center} zoom={2} scrollWheelZoom={false} worldCopyJump>
       <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <FitRoute route={route} />
-      {mode !== 'alternate' && nominal.length > 1 && <Polyline positions={nominal} pathOptions={{ color: '#a8ebcf', weight: 3, opacity: .86 }} />}
-      {mode === 'combined' && affected.length > 0 && <Polyline positions={affected} pathOptions={{ color: '#ff806c', weight: 7, opacity: .95 }} />}
-      {mode !== 'nominal' && alternate.length > 1 && <Polyline positions={alternate} pathOptions={{ color: '#ff806c', weight: 2, opacity: .9, dashArray: '7 8' }} />}
-      {route.ports.map((point) => <CircleMarker key={point.unLocode} center={[point.lat, point.lng]} radius={6} pathOptions={{ color: '#0b2026', weight: 2, fillColor: '#a8ebcf', fillOpacity: 1 }}><Tooltip direction="top">{point.label} · {point.unLocode}</Tooltip></CircleMarker>)}
-      {activeRules.map((rule) => <CircleMarker key={rule.id} center={[rule.marker.lat, rule.marker.lng]} radius={8} pathOptions={{ color: '#ff806c', weight: 2, fillColor: '#ff806c', fillOpacity: .25 }}><Tooltip direction="top">{rule.label} · fermeture simulee</Tooltip></CircleMarker>)}
+      {mode !== 'alternate' && nominal.length > 1 && <Polyline className="route-path route-path-nominal" positions={nominal} pathOptions={{ color: '#a8ebcf', weight: 3, opacity: .95 }} />}
+      {mode === 'combined' && affected.length > 0 && <Polyline className="route-path route-path-affected" positions={affected} pathOptions={{ color: '#ff806c', weight: 7, opacity: .95 }} />}
+      {mode !== 'nominal' && alternate.length > 1 && <Polyline className="route-path route-path-alternate" positions={alternate} pathOptions={{ color: '#ff806c', weight: 3, opacity: .95, dashArray: '7 8' }} />}
+      {route.ports.map((point) => <CircleMarker className="route-port-marker" key={point.unLocode} center={[point.lat, point.lng]} radius={6} pathOptions={{ color: '#0b2026', weight: 2, fillColor: '#a8ebcf', fillOpacity: 1 }}><Tooltip direction="top">{point.label} · {point.unLocode}</Tooltip></CircleMarker>)}
+      {activeRules.map((rule) => <CircleMarker className="route-closure-marker" key={rule.id} center={[rule.marker.lat, rule.marker.lng]} radius={8} pathOptions={{ color: '#ff806c', weight: 2, fillColor: '#ff806c', fillOpacity: .25 }}><Tooltip direction="top">{rule.label} · fermeture simulee</Tooltip></CircleMarker>)}
     </MapContainer>
     <div className="map-legend">{mode !== 'alternate' && <span><i className="legend-line nominal-line" />API / fixture route</span>}{mode !== 'nominal' && <span><i className="legend-line alternate-line" />Heuristic alternative</span>}{mode === 'combined' && <span><i className="legend-dot closure-dot" />Closed chokepoint</span>}</div>
     {route.missingPorts.length > 0 && <p className="map-note">Coordinates unavailable for {route.missingPorts.join(', ')}. The timeline remains authoritative.</p>}
