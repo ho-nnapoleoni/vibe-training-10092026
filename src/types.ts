@@ -73,6 +73,19 @@ export interface FinancialAssumptions {
   currency: 'EUR'
 }
 
+export interface FinancialCostBreakdown {
+  additionalDays: number
+  vesselOperatingCostPerVessel: number
+  fuelCostPerVessel: number
+  routeFeesPerVessel: number
+  opportunityCostPerVessel: number
+}
+
+export interface FinancialSource {
+  title: string
+  url: string
+}
+
 export interface FinancialImpact {
   divertedVesselCount: number
   costPerVessel: number
@@ -82,12 +95,15 @@ export interface FinancialImpact {
   lowEstimate: number
   highEstimate: number
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  breakdown: FinancialCostBreakdown
   assumptions: FinancialAssumptions
   modelVersion: string
 }
 
 export interface FinancialImpactResult extends FinancialImpact {
   source: 'mistral' | 'local'
+  researchedAt?: string
+  sources: FinancialSource[]
   recommendation: string
   explanation: string
 }

@@ -15,7 +15,7 @@ const apiKey = process.env.CMA_API_KEY
 const mistralApiKey = process.env.MISTRAL_API_KEY
 const mistralModel = process.env.MISTRAL_MODEL ?? 'mistral-small-latest'
 const mistralBaseUrl = process.env.MISTRAL_BASE_URL ?? 'https://api.mistral.ai/v1'
-const mistralTimeoutMs = Number(process.env.MISTRAL_TIMEOUT_MS ?? 8000)
+const mistralTimeoutMs = Math.max(Number(process.env.MISTRAL_TIMEOUT_MS ?? 30_000), 30_000)
 const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173,http://127.0.0.1:5173').split(',').map((origin) => origin.trim())
 if (!Number.isFinite(timeoutMs) || timeoutMs < 100) throw new Error('CMA_API_TIMEOUT_MS must be a number greater than 100')
 if (!Number.isFinite(mistralTimeoutMs) || mistralTimeoutMs < 100) throw new Error('MISTRAL_TIMEOUT_MS must be a number greater than 100')

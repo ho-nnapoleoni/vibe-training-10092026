@@ -939,6 +939,103 @@ select:focus-visible {
   margin-top: 4px;
   font-size: 12px;
 }
+.financial-details {
+  border-bottom: 1px solid var(--line);
+}
+.financial-details summary {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--mint);
+  font: 10px var(--mono);
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+}
+.financial-details summary::-webkit-details-marker {
+  display: none;
+}
+.financial-details[open] .detail-chevron {
+  transform: rotate(180deg);
+}
+.cost-lines {
+  padding-bottom: 12px;
+}
+.cost-lines > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 0;
+  border-top: 1px solid rgba(173, 205, 207, 0.08);
+}
+.cost-lines span,
+.cost-lines small {
+  display: block;
+}
+.cost-lines span {
+  color: var(--ink);
+  font-size: 10px;
+}
+.cost-lines small {
+  margin-top: 3px;
+  color: var(--muted);
+  font: 9px var(--mono);
+}
+.cost-lines strong {
+  font: 11px var(--mono);
+}
+.cost-lines .cost-line-total {
+  color: var(--mint);
+  border-top-color: rgba(168, 235, 207, 0.3);
+}
+.cost-lines .cost-line-fleet {
+  padding: 11px 9px;
+  color: var(--ink);
+  background: rgba(168, 235, 207, 0.08);
+  border-top: 0;
+}
+.cost-line-fleet strong {
+  color: var(--mint);
+  font-size: 13px;
+}
+.research-evidence,
+.research-warning {
+  margin-top: 13px;
+  padding: 10px;
+  border: 1px solid rgba(168, 235, 207, 0.2);
+  background: rgba(168, 235, 207, 0.05);
+}
+.research-status,
+.research-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: var(--mint);
+  font: 9px var(--mono);
+  line-height: 1.5;
+}
+.research-warning {
+  color: var(--yellow);
+  border-color: rgba(232, 203, 120, 0.3);
+  background: rgba(232, 203, 120, 0.05);
+}
+.source-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 8px;
+}
+.source-links a {
+  color: var(--ink);
+  font: 9px var(--mono);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.source-links a:hover {
+  color: var(--mint);
+}
 .financial-explanation {
   margin: 13px 0 0;
   color: var(--muted);

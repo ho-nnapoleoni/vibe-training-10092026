@@ -13,6 +13,19 @@ describe('financial impact engine', () => {
     expect(result.directCost).toBe(3_180_000)
     expect(result.opportunityCost).toBe(1_080_000)
     expect(result.totalCost).toBe(4_260_000)
+    expect(result.breakdown).toEqual({
+      additionalDays: 12,
+      vesselOperatingCostPerVessel: 780_000,
+      fuelCostPerVessel: 660_000,
+      routeFeesPerVessel: 150_000,
+      opportunityCostPerVessel: 540_000,
+    })
+    expect(
+      result.breakdown.vesselOperatingCostPerVessel
+      + result.breakdown.fuelCostPerVessel
+      + result.breakdown.routeFeesPerVessel
+      + result.breakdown.opportunityCostPerVessel,
+    ).toBe(result.costPerVessel)
     expect(result.riskLevel).toBe('HIGH')
     expect(result.lowEstimate).toBeLessThan(result.totalCost)
     expect(result.highEstimate).toBeGreaterThan(result.totalCost)

@@ -57,7 +57,9 @@ Le thème clair/sombre est mémorisé dans le navigateur et adopte la préféren
 
 Lorsqu'un service est affecté, le panneau de détail estime le coût du reroutage avec une ventilation entre coût direct et coût d'opportunité. Le moteur TypeScript calcule les montants de manière déterministe; Mistral génère uniquement l'explication et la recommandation à partir de ces montants.
 
-Le modèle de démonstration `rerouting-cost-v2` utilise les hypothèses suivantes :
+Le modèle `rerouting-cost-v3-web` demande à Mistral de lancer une nouvelle recherche Web à chaque estimation. L'agent recherche des références récentes pour l'OPEX hors carburant, le coût du combustible, les frais incrémentaux de la route alternative et le coût commercial du retard. Les références retournées par le connecteur `web_search` sont affichées dans l'interface.
+
+Les valeurs suivantes ne sont utilisées qu'en fallback lorsque la recherche Web est indisponible :
 
 - 65 000 EUR par navire et par jour d'exploitation supplémentaire ;
 - 55 000 EUR par navire et par jour de carburant supplémentaire ;
@@ -76,6 +78,8 @@ npm run dev
 ```
 
 Le script serveur charge automatiquement ce fichier, qui est ignoré par Git. Sans clé, en cas de timeout ou de réponse Mistral invalide, le calcul et une synthèse locale restent disponibles. Le navigateur ne reçoit jamais la clé.
+
+La recherche Web peut prendre plusieurs secondes. Le serveur applique un timeout minimal de 30 secondes et ne met pas les résultats en cache : toute nouvelle estimation ou modification du nombre de navires déclenche une nouvelle recherche sourcée.
 
 ## Verifications
 

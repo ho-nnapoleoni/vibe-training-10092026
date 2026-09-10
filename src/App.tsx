@@ -861,10 +861,49 @@ function FinancialImpactPanel({ result, loading, error, retry, divertedVesselCou
             <div><span>Total direct cost</span><strong>{currency.format(result.directCost)}</strong></div>
             <div><span>Total opportunity cost</span><strong>{currency.format(result.opportunityCost)}</strong></div>
           </div>
+          {result.breakdown && <details className="financial-details">
+            <summary>Calculation details <ChevronDown className="detail-chevron" size={16} /></summary>
+            <div className="cost-lines">
+              <div>
+                <span>Vessel operations<small>{result.breakdown.additionalDays} days × {currency.format(result.assumptions.vesselDailyCost)}/day</small></span>
+                <strong>{currency.format(result.breakdown.vesselOperatingCostPerVessel)}</strong>
+              </div>
+              <div>
+                <span>Additional fuel<small>{result.breakdown.additionalDays} days × {currency.format(result.assumptions.fuelDailyCost)}/day</small></span>
+                <strong>{currency.format(result.breakdown.fuelCostPerVessel)}</strong>
+              </div>
+              <div>
+                <span>Alternative route fees<small>Researched incremental fee per diverted vessel</small></span>
+                <strong>{currency.format(result.breakdown.routeFeesPerVessel)}</strong>
+              </div>
+              <div>
+                <span>Commercial delay<small>{result.breakdown.additionalDays} days × {currency.format(result.assumptions.commercialDelayDailyCost)}/day</small></span>
+                <strong>{currency.format(result.breakdown.opportunityCostPerVessel)}</strong>
+              </div>
+              <div className="cost-line-total">
+                <span>Cost per vessel</span>
+                <strong>{currency.format(result.costPerVessel)}</strong>
+              </div>
+              <div className="cost-line-fleet">
+                <span>Fleet calculation<small>{currency.format(result.costPerVessel)} × {result.divertedVesselCount} vessel{result.divertedVesselCount > 1 ? "s" : ""}</small></span>
+                <strong>{currency.format(result.totalCost)}</strong>
+              </div>
+            </div>
+          </details>}
+          {result.source === "mistral" && result.sources?.length > 0 ? (
+            <div className="research-evidence">
+              <div className="research-status"><Check size={14} /><span>Web research completed {result.researchedAt ? new Date(result.researchedAt).toLocaleString() : ""}</span></div>
+              <div className="source-links">
+                {result.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.title}</a>)}
+              </div>
+            </div>
+          ) : (
+            <div className="research-warning"><AlertTriangle size={14} /><span>Web research unavailable. Demo assumptions are being used; do not use this estimate for an operational decision.</span></div>
+          )}
           <p className="financial-explanation">{result.explanation}</p>
           <p className="proposal"><strong>[PROPOSAL]</strong> {result.recommendation.replace("[PROPOSAL] ", "")}</p>
           <div className="financial-meta">
-            <span>{result.source === "mistral" ? "Mistral analysis" : "Local analysis"}</span>
+            <span>{result.source === "mistral" ? "Mistral web research" : "Local fallback"}</span>
             <span>{result.modelVersion}</span>
           </div>
         </>
